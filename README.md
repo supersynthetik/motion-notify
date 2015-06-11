@@ -54,6 +54,7 @@ There's no automated installation yet so this is the current process
 Install Python Libraries
 sudo apt-get update
 sudo apt-get install python-pip
+sudo apt-get install python-openssl
 sudo pip install google-api-python-client
 
 Create a directory:
