@@ -43,7 +43,7 @@ You will be automatically prompted to download your private key in 'PKCS12' form
 Password for accessing it will be shown in pop-up, you may never need it, but it's better to put it to some secret place
 Download that key and keep it private on your system
 Add location of key to cfg under $/PRIVATE/KEY/PATH.p12
-After that you will see "Client ID" and "Email address" for your application
+After that you will see "Client ID" and "Email address" for your application e.g. XXXX@developer.gserviceaccount.com
 Add the email address to cfg file under $SERVICEACCOUNTEMAIL
 Go to Google Drive to the folder created earlier and open "Sharing settings" for it
 Add your $SERVICEACCOUNTEMAIL to the list of allowed users and allow it to edit the contents of that folder
