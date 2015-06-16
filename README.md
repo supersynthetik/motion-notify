@@ -81,9 +81,10 @@ Edit the config file and enter the following:
 Change the permissions
 sudo chown motion.motion /etc/motion-notify/motion-notify.py
 sudo chown motion.motion /etc/motion-notify/motion-notify.cfg
-sudo chmod 744 motion.motion /etc/motion-notify/motion-notify.py
-sudo chmod 600 motion.motion /etc/motion-notify/motion-notify.cfg
-sudo chmod 600 motion.motion $/PRIVATE/KEY/PATH.p12
+sudo chown motion.motion $/PRIVATE/KEY/PATH.p12
+sudo chmod 744 /etc/motion-notify/motion-notify.py
+sudo chmod 600 /etc/motion-notify/motion-notify.cfg
+sudo chown 600 motion.motion $/PRIVATE/KEY/PATH.p12
 
 Create the entry in the Motion conf file to trigger the motion-notify script when there is an alert
 sudo cat /etc/motion-notify/create-motion-conf-entries.txt >> /etc/motion/motion.conf
