@@ -46,7 +46,7 @@ import sys
 from apiclient.discovery import build
 from apiclient.http import MediaFileUpload
 import httplib2
-from oauth2client.client import SignedJwtAssertionCredentials
+from oauth2client.service_account import ServiceAccountCredentials
 from oauth2client.file import Storage
 
 logger = logging.getLogger('MotionNotify')
@@ -158,11 +158,11 @@ class MotionNotify:
     http = httplib2.Http()
 
     if credentials is None or credentials.invalid:
-      with open(self.private_key_path, 'rb') as f:
-        private_key = f.read()
-      credentials = (SignedJwtAssertionCredentials
-                     (self.service_account_email, private_key,
-                      scope=self.service_scope))
+     """Assumes Google isn't going to change its default key"""
+      private_key_password = 'notasecret'
+      credentials = (ServiceAccountCredentials.from_p12_keyfile
+                     (self.service_account_email, self.private_key_path,
+                      private_key_password, scopes=self.service_scope))
       storage.put(credentials)
     else:
       credentials.refresh(http)
