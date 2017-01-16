@@ -93,10 +93,10 @@ Copy motion-notify.cfg, motion-notify.py and create-motion-conf-entries.txt to t
 N.b.  If you manually run this script for testing it may create the drive credentials with permissions imcompatible with running as a service which will need to be changed
 `sudo chown motion.motion /etc/motion-notify/drive-credentials.json`  
 
-#### Create the entry in the Motion conf file to trigger the motion-notify script when there is an alert
+#### Create entries in the Motion conf file to trigger the motion-notify script
 `sudo cat /etc/motion-notify/create-motion-conf-entries.txt >> /etc/motion/motion.conf`  
 `rm /etc/motion-notify/create-motion-conf-entries.txt`  
 
 If you want to reveive an email notification at the start of the event uncomment the `#on_event_start` line at the end of the motion.conf file.  
-If you want the image preview uploaded to drive rather than embedded in the email uncomment the `#on_picture_save` line at the end of the motion.conf file.  
-If you want the image preview attached to the email with the video the `picture_filename ` in the motion.conf file should be changed to `picture_filename preview` and `output_pictures on` line set to `output_pictures best`
+If you want image snapshots uploaded to drive uncomment the `#on_picture_save` line at the end of the motion.conf file.  
+If you want an image preview attached to the email (instead of snapshots uploaded to drive) with the video the `picture_filename ` in the motion.conf file should be changed to `picture_filename preview` and `output_pictures on` line set to `output_pictures best`.
