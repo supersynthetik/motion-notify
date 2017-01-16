@@ -11,7 +11,6 @@ This carries out the following:
 - Optionally sends email notification as soon as motion is detected
 - Optionally embed image preview in email with video link or upload image preview to Drive
 
-Only receive alerts when you're not home.  
 The script detects whether you're at home by checking the network for the presence of certain devices by IP address or MAC address.  
 It's highly recommended to use IP rather than MAC. If you choose to use MAC you will need to run the script (and Motion) as root as it uses ARP - this isn't recommended. IP detection uses ping so will run as a regular user.  
 Specify either a comma separated list of IP addresses or a comma separated list of MAC addresses. IP addresses take priority so if you specify those, the MAC addresses will be ignored.  
