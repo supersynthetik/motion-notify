@@ -182,10 +182,10 @@ class MotionNotify:
              self.subject, marker, marker))
     p2 = ('Content-Type: text/plain\r\nContent-Transfer-Encoding:8bit\r'
           '\n\r\n%s\r\n--%s\r\n' % (msg, marker))
-    # If motion is setup to capture a jpg with same name as video,
+    # If motion image preview is default naming (same as vid + -00),
     #  add as email attachment
     vname = media_file_path.split('.')
-    fname = vname[0] + '.jpg'
+    fname = vname[0] + '-00.jpg'
     if os.path.isfile(fname):
       # Read a file and encode it into base64 format
       fo = open(fname, 'rb')
