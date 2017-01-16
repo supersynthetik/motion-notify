@@ -158,7 +158,7 @@ class MotionNotify:
     http = httplib2.Http()
 
     if credentials is None or credentials.invalid:
-     """Assumes Google isn't going to change its default key"""
+      """Assumes Google isn't going to change its default key"""
       private_key_password = 'notasecret'
       credentials = (ServiceAccountCredentials.from_p12_keyfile
                      (self.service_account_email, self.private_key_path,
