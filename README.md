@@ -3,11 +3,13 @@
 This Motion Notify is a simple notification system for Linux Motion providing upload to Google Drive and email notificaiton of detected events.
 This carries out the following:
 
-- Records video when motion detection event starts
+- Records video when motion event starts
 - Uploads video to Google Drive when the event ends
-- Sends an email when the event ends with a link to the video & embedded image preview of event
+- Sends an email when the event ends with a link to the video
 - Detects whether you're at home by looking for certain IP addresses on your local network and doesn't send alerts if you're home
 - Allows you to specify hours when you want to receive alerts even if you're at home
+- Optionally sends email notification as soon as motion is detected
+- Optionally embed image preview in email with video link or upload image preview to Drive
 
 Only receive alerts when you're not home.  
 The script detects whether you're at home by checking the network for the presence of certain devices by IP address or MAC address.  
@@ -55,18 +57,22 @@ There's no automated installation yet so this is the current process
 `sudo apt-get install python-pip python-openssl`  
 `sudo pip install google-api-python-client`  
 
-#### Create a directory:
+#### Create directory for files
 `sudo mkdir /etc/motion-notify`
 
 Copy motion-notify.cfg, motion-notify.py and create-motion-conf-entries.txt to the directory you created
 
-Create the log file and set the permissions
+#### Create the log file and set the permissions
 `sudo touch /var/tmp/motion-notify.log`  
 `sudo chown motion.motion /var/tmp/motion-notify.log`  
 `sudo chmod 664 /var/tmp/motion-notify.log`  
 
+#### Setup output directory
+`sudo mkdir $/OUTPUT/DIR`  
+`sudo chown motion.motion $/OUTPUT/DIR`
+`sudo echo "target_dir $/OUTPUT/DIR" >> /etc/motion/motion.conf`
 
-Edit the config file and enter the following:
+#### Edit the config file and enter the following:
 - Google account details into the GMail section of the config file
 - Email address to send alerts to
 - The URL of the folder you created in your Google account (just copy and paste it from the browser). This will be sent in the alert emails so that you can click through to the folder
@@ -76,7 +82,7 @@ Edit the config file and enter the following:
 - The hours that you always want to recieve email alerts even when you're home
 - Either enter IP addresses or MAC addresses (avoid using MAC addresses) which will be active when you're at home
 
-Change the permissions
+#### Change the permissions
 `sudo chown motion.motion /etc/motion-notify/motion-notify.py`  
 `sudo chown motion.motion /etc/motion-notify/motion-notify.cfg`  
 `sudo chown motion.motion $/PRIVATE/KEY/PATH.p12`  
@@ -84,9 +90,12 @@ Change the permissions
 `sudo chmod 600 /etc/motion-notify/motion-notify.cfg`  
 `sudo chown 600 motion.motion $/PRIVATE/KEY/PATH.p12`  
 
-Create the entry in the Motion conf file to trigger the motion-notify script when there is an alert
+N.b.  If you manually run this script for testing it may create the drive credentials with permissions imcompatible with running as a service which will need to be changed
+`sudo chown motion.motion /etc/motion-notify/drive-credentials.json`  
+
+#### Create the entry in the Motion conf file to trigger the motion-notify script when there is an alert
 `sudo cat /etc/motion-notify/create-motion-conf-entries.txt >> /etc/motion/motion.conf`  
 `rm /etc/motion-notify/create-motion-conf-entries.txt`  
 
-
-Motion will now send alerts to you when you're devices aren't present on the network
+If you want to reveive an email notification at the start of the event uncomment the `#on_event_start` line at the end of the motion.conf file.  
+If you want the image preview uploaded to drive rather than embedded in the email uncomment the `#on_picture_save` line at the end of the motion.conf file.  
