@@ -99,3 +99,4 @@ N.b.  If you manually run this script for testing it may create the drive creden
 
 If you want to reveive an email notification at the start of the event uncomment the `#on_event_start` line at the end of the motion.conf file.  
 If you want the image preview uploaded to drive rather than embedded in the email uncomment the `#on_picture_save` line at the end of the motion.conf file.  
+If you want the image preview attached to the email with the video the `picture_filename ` in the motion.conf file should be changed to `picture_filename preview` and `output_pictures on` line set to `output_pictures best`
