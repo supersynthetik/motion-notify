@@ -10,6 +10,8 @@ This carries out the following:
 - Allows you to specify hours when you want to receive alerts even if you're at home
 - Optionally sends email notification as soon as motion is detected
 - Optionally embed image preview in email with video link or upload image preview to Drive
+- Manually query & log Google Drive quota and usage
+- Manually delete uploaded files older than the specified retention period
 
 The script detects whether you're at home by checking the network for the presence of certain devices by IP address or MAC address.  
 It's highly recommended to use IP rather than MAC. If you choose to use MAC you will need to run the script (and Motion) as root as it uses ARP - this isn't recommended. IP detection uses ping so will run as a regular user.  
