@@ -303,7 +303,7 @@ class MotionNotify:
                 logger.info('Uploading image %s ' % media_file_path)
                 mime_type = 'image/jpeg'
             else:
-                if media_file_path.endswith(('avi', 'flv', 'mov', 'mpg', 'swf')):
+                if media_file_path.endswith(('avi', 'flv', 'mov', 'mpg', 'swf', 'mp4')):
                     logger.info('Uploading video %s ' % media_file_path)
                     mime_type = 'video/avi'
 
