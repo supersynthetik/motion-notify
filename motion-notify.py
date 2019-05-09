@@ -1,7 +1,7 @@
 #!/usr/bin/python2
-"""Created on 28th Dec 2017.
+"""Updated: 5th May 2019.
 
-Motion Notify v0.4 - uploads images and video to Google Drive and sends
+Motion Notify v1.1 - uploads images and video to Google Drive and sends
  notification via email.
 Detects whether someone is home by checking the local network for an IP
  address or MAC address and only sends email if nobody is home.
@@ -13,6 +13,9 @@ Optionally ends an email to the user at that start of an event and uploads
 At the end of an event the video is uploaded to Google Drive and a link
  is emailed to the user.
 Files are optionally deleted once they are uploaded.
+Options to manually delete specified number of days of the oldest file
+ from drive or to autoclean oldest drive files to reduce storage fullness
+ below specified threshold.
 
 Updated to support Google OAuth2 with service account and drive quota &
 file maintenance by Benjamin Millar.
@@ -48,8 +51,6 @@ import traceback
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
-
-# new imports
 import httplib2
 from apiclient import errors
 from apiclient.discovery import build
@@ -123,6 +124,8 @@ class MotionNotify:
         self.delete_files = config.getboolean('options', 'delete-files')
         self.send_email = config.getboolean('options', 'send-email')
         self.keep_days = config.getint('options', 'keep-days')
+        self.autoclean_percent = config.getint('options', 'autoclean-percent')
+        self.autoclean_increment = config.getint('options', 'autoclean-increment')
         self.google_drive_folder_link = config.get('gmail',
                                                    'google_drive_folder_link')
         self.event_started_message = config.get('gmail',
@@ -230,8 +233,8 @@ class MotionNotify:
         now = datetime.now()
         system_active = True
         # Ignore presence if force_on specified
-        if (self.forceOnStart and self.forceOnEnd and
-                now.hour >= self.forceOnStart and now.hour < self.forceOnEnd):
+        if ((self.forceOnStart >= 0) and (self.forceOnEnd <= 23) and
+                (now.hour >= self.forceOnStart) and (now.hour < self.forceOnEnd)):
             logger.info('System is forced active at the current time - '
                         'ignoring network presence')
             return True
@@ -279,14 +282,10 @@ class MotionNotify:
         logger.info('Checking for presence via IP address')
         addresses = self.ip_addresses.split(',')
         for address in addresses:
-            # test_string = 'is up'
             test_string = 'bytes from'
             results = (subprocess.Popen(
                 ['ping', '-c1', address], stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT).stdout.readlines())
-            # results = subprocess.Popen(['nmap', '-sPn', address],
-            # stdout=subprocess.PIPE,
-            # stderr=subprocess.STDOUT).stdout.readlines()
             logger.info('Nmap result %s', results)
             for result in results:
                 if test_string in result:
@@ -297,7 +296,8 @@ class MotionNotify:
 
     def upload_media(self, media_file_path, notify):
         """Upload media file to the specified folder. Then optionally send
-        an email and optionally delete the local file."""
+        an email, optionally delete the local file, and/or purge oldest
+        files from drive to reach target storage fullness threshold."""
         if self._system_active():
             if media_file_path.endswith('jpg'):
                 logger.info('Uploading image %s ' % media_file_path)
@@ -334,6 +334,14 @@ class MotionNotify:
                 if os.path.isfile(fname):
                     os.remove(fname)
                     logger.info('Deleting: %s', fname)
+        if 1 <= self.autoclean_percent < 100:
+            logger.info('Autoclean active')
+            while self.get_drive_info(service) > self.autoclean_percent:
+                logger.info('Drive storage above threshold, proceeding with autoclean')
+                trigger = 'auto'
+                self.cleanup_media(trigger)
+                #Brief pause to let drive storage quota catch up
+                time.sleep(5)
 
     def send_start_event_email(self, media_file_path, notify):
         """Send an email showing that the event has started."""
@@ -342,7 +350,6 @@ class MotionNotify:
             msg += '\n\n' + self.google_drive_folder_link
             self._send_email(msg, media_file_path)
 
-    # new function
     def get_drive_info(self, service):
         """Get Google drive info and write it to the log."""
         try:
@@ -355,11 +362,13 @@ class MotionNotify:
             logger.info('Remaining quota (GiB): %.3f' % remain)
             logger.info('Used quota (GiB)     : %.3f' % used)
             percent = (float(about['quotaBytesUsed'])/float(about['quotaBytesTotal']))*100
+            logger.info('Drive fullness: %.0f%%' % percent)
             if percent > 95:
                 logger.warning('%.0f%% Drive storage used.  Acquire more storage or '
                                'cleanup old data' % percent)
         except errors.HttpError, error:
             logger.error('An error occurred: %s' % error)
+        return percent
 
     def get_files_list(self, service):
         """Fetch list of all files owned by the current user."""
@@ -385,32 +394,37 @@ class MotionNotify:
         """Filter list of all files to get those outside the retention window."""
         filter = []
         for item in list:
-            if item['createdDate'] < str(date):
+            if datetime.strptime(item['createdDate'], '%Y-%m-%dT%H:%M:%S.%fZ') < date:
                 filter.append(item)
         return filter
 
-    def cleanup_media(self):
+    def cleanup_media(self, trigger):
         """Deletes files previously uploaded by the service account that are outside
-        the retention window specified in the config file"""
+        the retention window specified in the config file for a manual cleanup, a
+	dry-run of this, or an automated cleanup that will delete the oldest data
+	in specified increments until the target storage fullness threshold is reached"""
         service = self._get_service()
-        self.get_drive_info(service)
-        keep = date.today() - timedelta(days=self.keep_days)
+        percent = self.get_drive_info(service)
         batch = service.new_batch_http_request(callback=delete_files)
         result = self.get_files_list(service)
         if len(result) == 0:
             logger.info('No files in Google drive.')
             exit()
-        oldest = min(item['createdDate'] for item in result)
+        oldest = datetime.strptime(min(item['createdDate'] for item in result), '%Y-%m-%dT%H:%M:%S.%fZ')
         logger.info('Oldest file: %s' % str(oldest))
+        if (trigger == 'manual') or (trigger == 'dryrun'):
+            keep = datetime.today() - timedelta(days=self.keep_days)
+        if trigger == 'auto':
+            keep = oldest + timedelta(hours=self.autoclean_increment)
         filter = self.filter_files_list(result, keep)
-        logger.info('Removing files older than: %s' % str(keep))
-        if notify:
+        logger.info('Targetting files older than: %s' % str(keep))
+        if trigger == 'dryrun':
             logger.info('Drive cleanup in dry-run mode.')
         count = 0
         for item in filter:
-            if not notify:
+            if (trigger == 'manual') or (trigger == 'auto'):
                 batch.add(service.files().delete(fileId=item['id']))
-            count += 1
+                count += 1
             #Max 100 ops per batch request
             if count > 99:
                 batch.execute()
@@ -418,7 +432,7 @@ class MotionNotify:
         #Final batch execution to complete the cleanup
         batch.execute()
         logger.info('Total Files: %i' % len(result))
-        logger.info('Removed: %i' % len(filter))
+        logger.info('Eligible for removal: %i' % len(filter))
 
 def delete_files(request_id, response, exception):
     if exception is not None:
@@ -433,28 +447,34 @@ if __name__ == '__main__':
     try:
         if len(sys.argv) < 3:
             exit('Usage: motion-notify.py {configfile-path} {mediafile-path}'
-                 ' {send-email (1 if email required, if not, 0)}\n'
-                 'Alt usage: motion-notify.py {configfile-path} cleanup'
-                 ' {dry-run (1 if dry-run only, if not, 0)}'
+                 ' {send-email (optional: "1" if email required, "0" if not)}\n'
+                 'Alt usage: motion-notify.py {configfile-path}'
+                 ' {cleanup-flag ("cleanup" to trigger drive cleanup to'
+		 ' specified retention or "cleanup_dryrun" to trigger dry-run'
+		 ' of drive cleanup)}'
                  )
         cfg_path = sys.argv[1]
         vid_path = sys.argv[2]
-        if sys.argv[3] == '1':
-            notify = True
-        else:
+        try:
+            if sys.argv[3] == '1':
+                notify = True
+            else:
+                notify = False
+        except IndexError:
             notify = False
-        # new test
+        if vid_path == 'cleanup_dryrun':
+            trigger = 'dryrun'
+            MotionNotify(cfg_path).cleanup_media(trigger)
+            exit('Drive cleanup dryrun triggered')
         if vid_path == 'cleanup':
-            MotionNotify(cfg_path).cleanup_media()
+            trigger = 'manual'
+            MotionNotify(cfg_path).cleanup_media(trigger)
             exit('Drive cleanup triggered')
-        # end new
         if not os.path.exists(cfg_path):
             exit('Config file does not exist [%s]' % cfg_path)
-
         if vid_path == 'None':
             MotionNotify(cfg_path).send_start_event_email(vid_path, notify)
             exit('Start event triggered')
-
         if not os.path.exists(vid_path):
             exit('Video file does not exist [%s]' % vid_path)
 
