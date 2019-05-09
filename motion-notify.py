@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 """Updated: 5th May 2019.
 
-Motion Notify v1.1 - uploads images and video to Google Drive and sends
+Motion Notify v0.9 - uploads images and video to Google Drive and sends
  notification via email.
 Detects whether someone is home by checking the local network for an IP
  address or MAC address and only sends email if nobody is home.
