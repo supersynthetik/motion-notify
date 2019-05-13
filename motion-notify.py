@@ -234,7 +234,7 @@ class MotionNotify:
         system_active = True
         # Ignore presence if force_on specified
         if ((self.forceOnStart >= 0) and (self.forceOnEnd <= 23) and
-                (now.hour >= self.forceOnStart) and (now.hour < self.forceOnEnd)):
+                (now.hour >= self.forceOnStart) and (now.hour <= self.forceOnEnd)):
             logger.info('System is forced active at the current time - '
                         'ignoring network presence')
             return True
