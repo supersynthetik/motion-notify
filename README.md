@@ -90,7 +90,7 @@ Copy motion-notify.cfg, motion-notify.py and create-motion-conf-entries.txt to t
 `sudo chown motion.motion $/PRIVATE/KEY/PATH.p12`  
 `sudo chmod 744 /etc/motion-notify/motion-notify.py`  
 `sudo chmod 600 /etc/motion-notify/motion-notify.cfg`  
-`sudo chown 600 motion.motion $/PRIVATE/KEY/PATH.p12`  
+`sudo chmod 600 $/PRIVATE/KEY/PATH.p12`  
 
 N.b.  If you manually run this script for testing it may create the drive credentials with permissions imcompatible with running as a service which will need to be changed
 `sudo chown motion.motion /etc/motion-notify/drive-credentials.json`  
