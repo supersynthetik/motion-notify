@@ -57,7 +57,8 @@ There's no automated installation yet so this is the current process
 #### Install Python Libraries
 `sudo apt-get update`  
 `sudo apt-get install python-pip python-openssl`  
-`sudo pip install google-api-python-client`  
+`sudo pip install google-api-python-client`
+`sudo pip install oauth2client`
 
 #### Create directory for files
 `sudo mkdir /etc/motion-notify`
